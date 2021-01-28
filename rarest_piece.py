@@ -10,8 +10,6 @@ class RarestPieces(object):
         for piece_number in range(self.pieces_manager.number_of_pieces):
             self.rarest_pieces.append({"idPiece": piece_number, "numberOfPeers": 0, "peers": []})
 
-        # pub.subscribe(self.peersBitfield, 'RarestPiece.updatePeersBitfield')
-
     def peers_bitfield(self, bitfield=None, peer=None, piece_index=None):
 
         if len(self.rarest_pieces) == 0:
