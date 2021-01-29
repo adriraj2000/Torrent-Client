@@ -37,6 +37,29 @@ class Torrent(object):
             self.file_names.append({"path": root , "length": self.torrent_file['info']['length']})
             self.total_length = self.torrent_file['info']['length']
 
+    def load_from_path(self, path):
+        with open(path, 'rb') as file:
+            contents = bdecode(file)
+
+        self.torrent_file = contents
+        self.piece_length = self.torrent_file['info']['piece length']
+        self.pieces = self.torrent_file['info']['pieces']
+        raw_info_hash = bencode(self.torrent_file['info'])
+        self.info_hash = hashlib.sha1(raw_info_hash).digest()
+        self.peer_id = self.generate_peer_id()
+        self.announce_list = self.get_trakers()
+        self.init_files()
+        self.number_of_pieces = math.ceil(self.total_length / self.piece_length)
+        logging.debug(self.announce_list)
+        logging.debug(self.file_names)
+
+        assert(self.total_length > 0)
+        assert(len(self.file_names) > 0)
+
+        return self
+        
+
+
     def get_trakers(self):
         if 'announce-list' in self.torrent_file:
             return self.torrent_file['announce-list']
