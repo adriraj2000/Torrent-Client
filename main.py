@@ -90,3 +90,9 @@ class Run(object):
     def _exit_threads(self):
         self.peers_manager.is_active = False
         os._exit(0)
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+
+    run = Run()
+    run.start()
