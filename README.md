@@ -41,7 +41,7 @@ With this torrent client, you can :
 <li>Connect to peers</li>
 <li>Ask them for the blocks you want</li>
 <li>Save a block in RAM, and when a piece is completed and checked, write the data into your hard drive</li>
-
+Will add Wireshark debugging soon.
 
 ### Built With
 Python
