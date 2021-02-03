@@ -93,13 +93,10 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/Torrent-Client`)
 5. Open a Pull Request
 
-
-
 <!-- CONTACT -->
 ## Contact
 Name : Adriraj Chaudhuri<br>
 Email : adriraj@itg.ac.in
-
 
 <!-- REFERENCES -->
 ## References
