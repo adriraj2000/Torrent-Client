@@ -106,8 +106,7 @@ Github Contributor: https://github.com/NamanGoyal07
 ## References
 1.http://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html<br>
 2.http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/<br>
-3.https://github.com/gallexis/pytorrent<br>
-4.https://github.com/lita/bittorrent<br>
-5.https://wiki.theory.org/BitTorrentSpecification
+3.https://github.com/lita/bittorrent<br>
+4.https://wiki.theory.org/BitTorrentSpecification
 
 
