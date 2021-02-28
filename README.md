@@ -97,8 +97,9 @@ Contributions are what make the open source community such an amazing place to b
 
 <!-- CONTACT -->
 ## Contact
-Name : Adriraj Chaudhuri<br>
-Email : adriraj@itg.ac.in
+Name : Adriraj Chaudhuri, Naman Goyal<br>
+Email : adriraj@itg.ac.in, naman18@iitg.ac.in<br>
+Github Contributor: https://github.com/NamanGoyal07
 
 
 <!-- REFERENCES -->
