@@ -108,5 +108,5 @@ Github Contributor: https://github.com/NamanGoyal07
 2.http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/<br>
 3.https://github.com/lita/bittorrent<br>
 4.https://wiki.theory.org/BitTorrentSpecification
-
+5.https://www.bittorrent.org/beps/bep_0015.html ( Official Spec which gives us the protocols for parsing the message and connection/announce request/response)
 
