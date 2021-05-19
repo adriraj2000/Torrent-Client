@@ -4,6 +4,9 @@ import logging
 import os
 import bencodepy
 import decoding
+import hashlib
+import string
+import random
 
 # general torrent settings
 torrent_settings = {
@@ -44,3 +47,20 @@ for key, val in data.items():
     metadata[key.decode()] = val
 
 final_metadata = decoding.decode_torrent(sys.argv[1])
+info_hash = hashlib.sha1(bencodepy.encode(metadata['info'])).digest()
+
+
+PORT_NO = 6881
+#random generated peer id for this client
+PEER_ID = ''.join(random.choices(string.digits, k=20))
+
+torrent_params = {
+	"info_hash": info_hash,
+	"peer_id" : PEER_ID,
+	"uploaded" : 0,
+	"downloaded" : 0,
+	"left":metadata['info']['length'],
+	"port":PORT_NO
+}
+
+
