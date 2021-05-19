@@ -7,6 +7,7 @@ import decoding
 import hashlib
 import string
 import random
+from threading import *
 
 # general torrent settings
 torrent_settings = {
@@ -51,16 +52,40 @@ info_hash = hashlib.sha1(bencodepy.encode(metadata['info'])).digest()
 
 
 PORT_NO = 6881
-#random generated peer id for this client
+# random generated peer id for this client
 PEER_ID = ''.join(random.choices(string.digits, k=20))
 
 torrent_params = {
-	"info_hash": info_hash,
-	"peer_id" : PEER_ID,
-	"uploaded" : 0,
-	"downloaded" : 0,
-	"left":metadata['info']['length'],
-	"port":PORT_NO
+    "info_hash": info_hash,
+    "peer_id": PEER_ID,
+    "uploaded": 0,
+    "downloaded": 0,
+    "left": final_metadata['info']['length'],
+    "port": PORT_NO
 }
 
+# We will be sorting pieces according to their availabilty
+rarest_pieces = []
 
+# We will be keeping track of all the information related to received pieces
+received_pieces = [{"index": i, "done": False, "downloading": False, "begin": 0,
+                    "downloading_peer": None, "count": 0} for i in range(len(final_metadata['info']['pieces']))]
+
+# This will store the peers obtained from tracker
+peers = []
+
+# Opening torrent file.
+try:
+    downloading_file = open(
+        torrent_params['download_location'] + final_metadata['info']['name'], "rb+")
+except:
+    create = open(torrent_params['download_location'] +
+                  final_metadata['info']['name'], "w")
+    create.close()
+    downloading_file = open(
+        torrent_params['download_location']+final_metadata['info']['name'], "rb+")
+
+
+rarest_piece_lock = Lock()  # lock for rarest piece list
+peer_lock = Lock()  # lock for peers list
+received_pieces_lock = Lock()
