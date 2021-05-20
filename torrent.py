@@ -102,11 +102,11 @@ def write_piece(index, begin, block):
 
 
 def read_piece(index):
-    downloading_file.seek((index * metadata['info']['piece length']), 0)
+    downloading_file.seek((index * final_metadata['info']['piece length']), 0)
 
-    if(index == len(metadata['info']['pieces'])-1):
+    if(index == len(final_metadata['info']['pieces'])-1):
         piece = downloading_file.read(
-            metadata['info']['length'] - (index * metadata['info']['piece length']))
+            final_metadata['info']['length'] - (index * final_metadata['info']['piece length']))
     else:
-        piece = downloading_file.read(metadata['info']['piece length'])
+        piece = downloading_file.read(final_metadata['info']['piece length'])
     return piece
