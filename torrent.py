@@ -8,6 +8,7 @@ import hashlib
 import string
 import random
 from threading import *
+import requests
 
 # general torrent settings
 torrent_settings = {
@@ -89,3 +90,23 @@ except:
 rarest_piece_lock = Lock()  # lock for rarest piece list
 peer_lock = Lock()  # lock for peers list
 received_pieces_lock = Lock()
+
+# All the tracker related code here and parsing the messages and the communication
+# between the peers
+
+
+def write_piece(index, begin, block):
+    downloading_file.seek(
+        (index * final_metadata['info']['piece length'])+begin, 0)
+    downloading_file.write(block)
+
+
+def read_piece(index):
+    downloading_file.seek((index * metadata['info']['piece length']), 0)
+
+    if(index == len(metadata['info']['pieces'])-1):
+        piece = downloading_file.read(
+            metadata['info']['length'] - (index * metadata['info']['piece length']))
+    else:
+        piece = downloading_file.read(metadata['info']['piece length'])
+    return piece
