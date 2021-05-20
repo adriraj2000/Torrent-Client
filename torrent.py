@@ -9,6 +9,7 @@ import string
 import random
 from threading import *
 import requests
+import json
 
 # general torrent settings
 torrent_settings = {
@@ -42,26 +43,37 @@ else:
 
 # Decoding the bencoded torrent file and extracting the metadata
 f = open(sys.argv[1], "rb")  # Read in buffer mode
-data = bencodepy.decode(f.read())
+met = bencodepy.decode(f.read())
+meta = {}
+for key, val in met.items():
+    meta[key.decode()] = val
 
-metadata = {}
-for key, val in data.items():
-    metadata[key.decode()] = val
+metadata = decoding.decode_torrent(sys.argv[1])
 
-final_metadata = decoding.decode_torrent(sys.argv[1])
-info_hash = hashlib.sha1(bencodepy.encode(metadata['info'])).digest()
+# "announce":"udp://tracker.coppersurfer.tk:6969/announce",
+#    "created by":"uTorrent/1870",
+#    "creation date":1462355939,
+#    "encoding":"UTF-8",
+#    "info":{
+#       "length":124234,
+#       "name":"puppy.jpg",
+#       "piece length":16384,
+#       "pieces":"T�k�/�_(�S\\u0011h%���+]q\\'B\\u0018�٠:����p\\"�j����1-g\\"\\u0018�s(\\u001b\\u000f���V��=�h�m\\u0017a�nF�2���N\\r�ǩ�_�\\u001e\\"2���\"'�wO���-;\\u0004ע\\u0017�ؑ��L&����0\\u001f�D_9��\\t\\\\��O�h,n\\u001a5g�(��仑,�\\\\߰�%��U��\\u0019��C\\u0007>��df��\"}}"
+
+info_hash = hashlib.sha1(bencodepy.encode(meta['info'])).digest()
 
 
 PORT_NO = 6881
 # random generated peer id for this client
 PEER_ID = ''.join(random.choices(string.digits, k=20))
 
+
 torrent_params = {
     "info_hash": info_hash,
     "peer_id": PEER_ID,
     "uploaded": 0,
     "downloaded": 0,
-    "left": final_metadata['info']['length'],
+    "left": metadata['info'][b'length'],
     "port": PORT_NO
 }
 
@@ -70,21 +82,22 @@ rarest_pieces = []
 
 # We will be keeping track of all the information related to received pieces
 received_pieces = [{"index": i, "done": False, "downloading": False, "begin": 0,
-                    "downloading_peer": None, "count": 0} for i in range(len(final_metadata['info']['pieces']))]
+                    "downloading_peer": None, "count": 0} for i in range(len(metadata['info'][b'pieces']))]
 
 # This will store the peers obtained from tracker
 peers = []
 
+
 # Opening torrent file.
 try:
     downloading_file = open(
-        torrent_params['download_location'] + final_metadata['info']['name'], "rb+")
+        torrent_settings['download_location'] + metadata['info'][b'name'].decode('UTF-8'), "rb+")
 except:
-    create = open(torrent_params['download_location'] +
-                  final_metadata['info']['name'], "w")
+    create = open(torrent_settings['download_location'] +
+                  metadata['info'][b'name'].decode('UTF-8'), "w")
     create.close()
     downloading_file = open(
-        torrent_params['download_location']+final_metadata['info']['name'], "rb+")
+        torrent_settings['download_location']+metadata['info'][b'name'].decode('UTF-8'), "rb+")
 
 
 rarest_piece_lock = Lock()  # lock for rarest piece list
@@ -97,16 +110,16 @@ received_pieces_lock = Lock()
 
 def write_piece(index, begin, block):
     downloading_file.seek(
-        (index * final_metadata['info']['piece length'])+begin, 0)
+        (index * metadata['info'][b'piece length'])+begin, 0)
     downloading_file.write(block)
 
 
 def read_piece(index):
-    downloading_file.seek((index * final_metadata['info']['piece length']), 0)
+    downloading_file.seek((index * metadata['info'][b'piece length']), 0)
 
-    if(index == len(final_metadata['info']['pieces'])-1):
+    if(index == len(metadata['info'][b'pieces'])-1):
         piece = downloading_file.read(
-            final_metadata['info']['length'] - (index * final_metadata['info']['piece length']))
+            metadata['info'][b'length'] - (index * metadata['info'][b'piece length']))
     else:
-        piece = downloading_file.read(final_metadata['info']['piece length'])
+        piece = downloading_file.read(metadata['info'][b'piece length'])
     return piece
