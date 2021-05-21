@@ -10,6 +10,8 @@ import random
 from threading import *
 import requests
 import json
+import socket
+from struct import *
 
 # general torrent settings
 torrent_settings = {
@@ -104,34 +106,92 @@ rarest_piece_lock = Lock()  # lock for rarest piece list
 peer_lock = Lock()  # lock for peers list
 received_pieces_lock = Lock()
 
-#------------------------------
+# -----------------------------------------------------
+
 
 def http_tracker(url, par):
-	global peers
-	try:
-		response = requests.get(url, params = par, timeout = 10)
-		if(response):
-			temp,peer_data = {}, bencodepy.decode(response.content)
-				
-			for key, val in peer_data.items():
-				temp[key.decode()] = val
-				
-			peer_data = temp	
-			for peer in peer_data['peers']:
-				temp = {}
-				for key, val in peer.items():
-					temp[key.decode()] = val		
-				temp['ip'] = temp['ip'].decode()
-				peer_lock.acquire()
-				peers.append(temp)
-				peer_lock.release()		
-	except Exception as e:
-		print("Error reaching http tracker", url)
-		return None	
+    global peers
+    try:
+        response = requests.get(url, params=par, timeout=10)
+        if(response):
+            temp, peer_data = {}, bencodepy.decode(response.content)
+
+            for key, val in peer_data.items():
+                temp[key.decode()] = val
+
+            peer_data = temp
+            for peer in peer_data['peers']:
+                temp = {}
+                for key, val in peer.items():
+                    temp[key.decode()] = val
+                temp['ip'] = temp['ip'].decode()
+                peer_lock.acquire()
+                peers.append(temp)
+                peer_lock.release()
+    except Exception as e:
+        print("Error reaching http tracker", url)
+        return None
 
 
+def udp_tracker(domain, port, params):  # http://www.bittorrent.org/beps/bep_0015.html
+    global peers
+    '''Connection Request and Response'''
+    protocol_id = 0x41727101980
+    action = 0  # connection
+    transaction_id = random.randrange(0, 2147483647)
 
-#------------------------------
+    # All values are send in network byte order (big endian)
+    data = pack('!qii', protocol_id, action, transaction_id)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(10)
+    try:
+        sock.sendto(data, (domain, int(port)))
+    except Exception as e:
+        print("Could not connect to tracker", domain, port)
+        return None
+    try:
+        data, server = sock.recvfrom(1024)
+        action, transaction_id, connection_id = unpack('!iiq', data)
+    except Exception as e:
+        print("No response")
+        return None
+
+    '''Announce Request and Response'''
+    action = 1  # announce
+    event, ip_address, key, num_want = 0, 0, random.randrange(
+        0, 2147483647), -1
+    data = pack('!qii20s20sqqqiiiih', connection_id, action, transaction_id, params['info_hash'], params['peer_id'].encode(
+    ), params['downloaded'], params['left'], params['uploaded'], event, ip_address, key, num_want, params['port'])
+
+    try:
+        sock.sendto(data, (domain, int(port)))
+
+    except Exception as e:
+        print("Could not connect to tracker", domain, port)
+        return None
+
+    try:
+        data, server = sock.recvfrom(1024)
+        if(len(data) >= 20):
+            action, transaction_id_tmp, inteval, leechers, seeders = unpack(
+                '!iiiii', data[:20])
+            n = int((len(data)-20) / 6)
+            res = unpack("!"+n*'BBBBH', data[20:])
+            peer_lock.acquire()
+            for x in range(0, len(res), 5):
+                i1, i2, i3, i4, port = res[x:x+5]
+                ip = str(i1)+"."+str(i2)+"."+str(i3)+"."+str(i4)
+                peers.append({'ip': ip, 'port': port})
+            peer_lock.release()
+
+    except Exception as e:
+        print("No response for announce")
+        return None
+
+        # ------------------------------------------
+
+
 
 
 def write_piece(index, begin, block):
