@@ -12,6 +12,7 @@ import requests
 import json
 import socket
 from struct import *
+from urllib.parse import parse, urlparse
 
 # general torrent settings
 torrent_settings = {
@@ -189,9 +190,49 @@ def udp_tracker(domain, port, params):  # http://www.bittorrent.org/beps/bep_001
         print("No response for announce")
         return None
 
-        # ------------------------------------------
 
+def get_all_peers(metadata, params):
+    url_p = urlparse(metadata['announce'])
+    global peers
+    http_threads = []
+    udp_threads = []
+    if(url_p.scheme == 'http' or url_p.scheme == 'https'):
+        # http_tracker(metadata['announce'],par)
+        http_threads.append(
+            Thread(target=http_tracker, args=(metadata['announce'], params)))
 
+    elif(url_p.scheme == 'udp'):
+        domain, port = url_p.netloc.split(":")
+        # udp_tracker(domain,port,par)
+        udp_threads.append(
+            Thread(target=udp_tracker, args=(domain, port, params)))
+
+    for tracker in metadata['announce-list']:
+        url_p = urlparse(tracker[0])
+        if(url_p.scheme == 'udp'):
+            domain, port = url_p.netloc.split(":")
+            # udp_tracker(domain,port,par)
+            udp_threads.append(
+                Thread(target=udp_tracker, args=(domain, port, params)))
+
+        elif(url_p.scheme == 'https' or url_p.scheme == 'http'):
+            #http_tracker(tracker[0], par)
+            http_threads.append(
+                Thread(target=http_tracker, args=(tracker[0], params)))
+
+    for h in http_threads:
+        h.start()
+    for u in udp_threads:
+        u.start()
+    for h in http_threads:
+        h.join()
+    for u in udp_threads:
+        u.join()
+    temp = []
+    for peer in peers:
+        if peer not in temp: # Won't be making repetitive calls
+            temp.append(peer)
+    peers = temp
 
 
 def write_piece(index, begin, block):
