@@ -104,8 +104,34 @@ rarest_piece_lock = Lock()  # lock for rarest piece list
 peer_lock = Lock()  # lock for peers list
 received_pieces_lock = Lock()
 
-# All the tracker related code here and parsing the messages and the communication
-# between the peers
+#------------------------------
+
+def http_tracker(url, par):
+	global peers
+	try:
+		response = requests.get(url, params = par, timeout = 10)
+		if(response):
+			temp,peer_data = {}, bencodepy.decode(response.content)
+				
+			for key, val in peer_data.items():
+				temp[key.decode()] = val
+				
+			peer_data = temp	
+			for peer in peer_data['peers']:
+				temp = {}
+				for key, val in peer.items():
+					temp[key.decode()] = val		
+				temp['ip'] = temp['ip'].decode()
+				peer_lock.acquire()
+				peers.append(temp)
+				peer_lock.release()		
+	except Exception as e:
+		print("Error reaching http tracker", url)
+		return None	
+
+
+
+#------------------------------
 
 
 def write_piece(index, begin, block):
